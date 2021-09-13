@@ -7,7 +7,6 @@ let uid = 0
 
 export function initMixin (Vue) {
   Vue.prototype._init = function (options) {
-    console.log('_init')
     const vm = this
     // a uid
     vm._uid = uid++

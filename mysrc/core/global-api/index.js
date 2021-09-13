@@ -1,4 +1,4 @@
-import config from '../config'
+
 import { initExtend } from './extend'
 
 export function extend (to, _from) {
@@ -10,10 +10,8 @@ export function extend (to, _from) {
 
 export function initGlobalAPI (Vue) {
   const configDef = {}
-  configDef.get = () => config
   
   Object.defineProperty(Vue, 'config', configDef)
-  console.dir(Vue.config)
 
   Vue.options = Object.create(null)
   const ASSET_TYPES = ['component','directive','filter']

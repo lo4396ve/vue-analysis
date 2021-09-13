@@ -4,7 +4,6 @@ import { createEmptyVNode } from '../vdom/vnode'
 import { pushTarget, popTarget } from '../observer/dep'
 
 import {
-  noop,
   emptyObject,
   invokeWithErrorHandling
 } from '../util/index'
@@ -93,15 +92,15 @@ export function mountComponent (
   let updateComponent
   /* istanbul ignore if */
   updateComponent = () => {
-    // debugger;
-    console.log('updateComponent')
     vm._update(vm._render())
   }
 
+  updateComponent();
 
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
+  function noop() {}
   new Watcher(vm, updateComponent, noop, {
     before () {
       if (vm._isMounted && !vm._isDestroyed) {

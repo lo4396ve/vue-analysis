@@ -35,7 +35,7 @@ export function toggleObserving (value) {
  * collect dependencies and dispatch updates.
  */
 export class Observer {
-
+  
   constructor (value) {
     this.value = value
     this.dep = new Dep()
@@ -149,6 +149,7 @@ export function defineReactive (
   if ((!getter || setter) && arguments.length === 2) {
     val = obj[key]
   }
+
   let childOb = !shallow && observe(val)
   Object.defineProperty(obj, key, {
     enumerable: true,
