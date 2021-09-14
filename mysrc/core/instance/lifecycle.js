@@ -95,7 +95,6 @@ export function mountComponent (
     vm._update(vm._render())
   }
 
-  updateComponent();
 
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
