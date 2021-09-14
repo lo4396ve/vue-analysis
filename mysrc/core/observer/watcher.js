@@ -21,23 +21,26 @@ let uid = 0
  * This is used for both the $watch() api and directives.
  */
 export default class Watcher {
-  // vm;
-  // expression;
-  // cb;
-  // id;
-  // deep;
-  // user;
-  // lazy;
-  // sync;
-  // dirty;
-  // active;
-  // deps;
-  // newDeps;
-  // depIds;
-  // newDepIds;
-  // before;
-  // getter;
-  // value;
+  /**
+   * Watcher的实例属性
+   * vm;
+   * expression;
+   * cb;
+   * id;
+   * deep;
+   * user;
+   * lazy;
+   * sync;
+   * dirty;
+   * active;
+   * deps;
+   * newDeps;
+   * depIds;
+   * newDepIds;
+   * before;
+   * getter;
+   * value;
+   */
 
   constructor (
     vm,
