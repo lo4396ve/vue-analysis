@@ -1,5 +1,5 @@
-import { pushTarget, popTarget } from '../observer/dep'
-// import Watcher from '../observer/watcher'
+import Watcher from '../observer/watcher'
+import Dep, { pushTarget, popTarget } from '../observer/dep'
 import {
   set,
   del,
@@ -41,6 +41,7 @@ export function initState (vm) {
   } else {
     observe(vm._data = {}, true /* asRootData */)
   }
+  if (opts.computed) initComputed(vm, opts.computed)
 }
 
 function initData (vm) {
@@ -99,21 +100,76 @@ export function getData (data, vm) {
   }
 }
 
-// function createWatcher (
-//   vm,
-//   expOrFn,
-//   handler,
-//   options
-// ) {
-//   if (isPlainObject(handler)) {
-//     options = handler
-//     handler = handler.handler
-//   }
-//   if (typeof handler === 'string') {
-//     handler = vm[handler]
-//   }
-//   return vm.$watch(expOrFn, handler, options)
-// }
+const computedWatcherOptions = { lazy: true }
+function initComputed (vm, computed) {
+  // $flow-disable-line
+  const watchers = vm._computedWatchers = Object.create(null)
+  // computed properties are just getters during SSR
+  // 不考虑SSR
+  const isSSR = false;
+
+  for (const key in computed) {
+    const userDef = computed[key]
+    const getter = typeof userDef === 'function' ? userDef : userDef.get
+
+    if (!isSSR) {
+      // create internal watcher for the computed property.
+      watchers[key] = new Watcher(
+        vm,
+        getter || noop,
+        noop,
+        computedWatcherOptions
+      )
+    }
+
+    if (!(key in vm)) {
+      defineComputed(vm, key, userDef)
+    }
+  }
+}
+export function defineComputed (
+  target,
+  key,
+  userDef
+) {
+  // const shouldCache = !isServerRendering()
+  // 在浏览器环境下（非SSR）isServerRendering()返回false，这里直接令shouldCache=true
+  const shouldCache = true;
+  if (typeof userDef === 'function') {
+    sharedPropertyDefinition.get = shouldCache
+      ? createComputedGetter(key)
+      : createGetterInvoker(userDef)
+    sharedPropertyDefinition.set = noop
+  } else {
+    sharedPropertyDefinition.get = userDef.get
+      ? shouldCache && userDef.cache !== false
+        ? createComputedGetter(key)
+        : createGetterInvoker(userDef.get)
+      : noop
+    sharedPropertyDefinition.set = userDef.set || noop
+  }
+
+  Object.defineProperty(target, key, sharedPropertyDefinition)
+}
+function createComputedGetter (key) {
+  return function computedGetter () {
+    const watcher = this._computedWatchers && this._computedWatchers[key]
+    if (watcher) {
+      if (watcher.dirty) {
+        watcher.evaluate()
+      }
+      if (Dep.target) {
+        watcher.depend()
+      }
+      return watcher.value
+    }
+  }
+}
+function createGetterInvoker(fn) {
+  return function computedGetter () {
+    return fn.call(this, this)
+  }
+}
 
 export function stateMixin (Vue) {
   // flow somehow has problems with directly declared definition object
@@ -121,41 +177,11 @@ export function stateMixin (Vue) {
   // the object here.
   const dataDef = {}
   dataDef.get = function () { return this._data }
-  // if (process.env.NODE_ENV !== 'production') {
-  //   dataDef.set = function () {
-  //     warn(
-  //       'Avoid replacing instance root $data. ' +
-  //       'Use nested data properties instead.',
-  //       this
-  //     )
-  //   }
-  // }
+
   Object.defineProperty(Vue.prototype, '$data', dataDef)
   // Object.defineProperty(Vue.prototype, '$props', propsDef)
 
   Vue.prototype.$set = set
   Vue.prototype.$delete = del
 
-  // Vue.prototype.$watch = function (
-  //   expOrFn,
-  //   cb,
-  //   options
-  // ) {
-  //   const vm = this
-  //   if (isPlainObject(cb)) {
-  //     return createWatcher(vm, expOrFn, cb, options)
-  //   }
-  //   options = options || {}
-  //   options.user = true
-  //   const watcher = new Watcher(vm, expOrFn, cb, options)
-  //   if (options.immediate) {
-  //     const info = `callback for immediate watcher "${watcher.expression}"`
-  //     pushTarget()
-  //     invokeWithErrorHandling(cb, vm, [watcher.value], vm, info)
-  //     popTarget()
-  //   }
-  //   return function unwatchFn () {
-  //     watcher.teardown()
-  //   }
-  // }
 }
