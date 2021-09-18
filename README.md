@@ -1,5 +1,3 @@
-# state版本源代码
-state分支对简易版添加了data绑定功能，需要查看这个版本代码时不要忘了切换到state分支。
-
-[state版本详解&vue响应式系统讲解]()
+# 计算属性computed版本源代码
+当前computed分支在state分支基础添加了计算属性的功能，实现computed与data依赖绑定功能。
 
