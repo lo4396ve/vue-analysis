@@ -13,7 +13,7 @@ import {
   isReserved,
   handleError,
   isPlainObject,
-  // invokeWithErrorHandling
+  invokeWithErrorHandling
 } from '../util/index'
 
 const sharedPropertyDefinition = {
@@ -42,6 +42,9 @@ export function initState (vm) {
     observe(vm._data = {}, true /* asRootData */)
   }
   if (opts.computed) initComputed(vm, opts.computed)
+  if (opts.watch) {
+    initWatch(vm, opts.watch)
+  }
 }
 
 function initData (vm) {
@@ -171,6 +174,35 @@ function createGetterInvoker(fn) {
   }
 }
 
+function initWatch (vm, watch) {
+  for (const key in watch) {
+    const handler = watch[key]
+    if (Array.isArray(handler)) {
+      for (let i = 0; i < handler.length; i++) {
+        createWatcher(vm, key, handler[i])
+      }
+    } else {
+      createWatcher(vm, key, handler)
+    }
+  }
+}
+
+function createWatcher (
+  vm,
+  expOrFn,
+  handler,
+  options
+) {
+  if (isPlainObject(handler)) {
+    options = handler
+    handler = handler.handler
+  }
+  if (typeof handler === 'string') {
+    handler = vm[handler]
+  }
+  return vm.$watch(expOrFn, handler, options)
+}
+
 export function stateMixin (Vue) {
   // flow somehow has problems with directly declared definition object
   // when using Object.defineProperty, so we have to procedurally build up
@@ -183,5 +215,28 @@ export function stateMixin (Vue) {
 
   Vue.prototype.$set = set
   Vue.prototype.$delete = del
+
+  Vue.prototype.$watch = function (
+    expOrFn,
+    cb,
+    options
+  ) {
+    const vm = this
+    if (isPlainObject(cb)) {
+      return createWatcher(vm, expOrFn, cb, options)
+    }
+    options = options || {}
+    options.user = true
+    const watcher = new Watcher(vm, expOrFn, cb, options)
+    if (options.immediate) {
+      const info = `callback for immediate watcher "${watcher.expression}"`
+      pushTarget()
+      invokeWithErrorHandling(cb, vm, [watcher.value], vm, info)
+      popTarget()
+    }
+    return function unwatchFn () {
+      watcher.teardown()
+    }
+  }
 
 }

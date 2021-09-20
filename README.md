@@ -1,3 +1,3 @@
-# 计算属性computed版本源代码
-当前computed分支在state分支基础添加了计算属性的功能，实现computed与data依赖绑定功能。
+# 侦听器watch版本源代码
+当前watch分支在computed分支基础添加了侦听器的功能，使用户可以手动侦听数据的变化。
 
