@@ -25,4 +25,7 @@ Vue源码体积比较庞大，本文从vue源码抽取出一个简易版的vue�
   * [依赖收集Dep](https://github.com/lo4396ve/vue-analysis/tree/simple/doc/observer/Dep)
   * [Watcher](https://github.com/lo4396ve/vue-analysis/tree/simple/doc/observer/Watcher)
   * [派发通知-notify](https://github.com/lo4396ve/vue-analysis/tree/simple/doc/observer/Notify)
+* 计算属性&侦听器
+  * [计算属性computed](https://github.com/lo4396ve/vue-analysis/tree/simple/doc/computed&watch/computed)
+  * [侦听器watch](https://github.com/lo4396ve/vue-analysis/tree/simple/doc/computed&watch/watch)
 
