@@ -8,6 +8,7 @@ import {
 
 import {
   warn,
+  bind,
   noop,
   hasOwn,
   isReserved,
@@ -36,6 +37,7 @@ export function proxy (target, sourceKey, key) {
 export function initState (vm) {
   vm._watchers = []
   const opts = vm.$options
+  if (opts.methods) initMethods(vm, opts.methods)
   if (opts.data) {
     initData(vm)
   } else {
@@ -171,6 +173,34 @@ function createComputedGetter (key) {
 function createGetterInvoker(fn) {
   return function computedGetter () {
     return fn.call(this, this)
+  }
+}
+
+function initMethods (vm, methods) {
+  const props = vm.$options.props
+  for (const key in methods) {
+    if (process.env.NODE_ENV !== 'production') {
+      if (typeof methods[key] !== 'function') {
+        warn(
+          `Method "${key}" has type "${typeof methods[key]}" in the component definition. ` +
+          `Did you reference the function correctly?`,
+          vm
+        )
+      }
+      if (props && hasOwn(props, key)) {
+        warn(
+          `Method "${key}" has already been defined as a prop.`,
+          vm
+        )
+      }
+      if ((key in vm) && isReserved(key)) {
+        warn(
+          `Method "${key}" conflicts with an existing Vue instance method. ` +
+          `Avoid defining component methods that start with _ or $.`
+        )
+      }
+    }
+    vm[key] = typeof methods[key] !== 'function' ? noop : bind(methods[key], vm)
   }
 }
 

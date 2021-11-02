@@ -1,7 +1,7 @@
 import { initMixin } from './init'
 import { renderMixin } from './render'
 import { lifecycleMixin } from './lifecycle'
-// import { eventsMixin } from './events'
+import { eventsMixin } from './events'
 import { stateMixin } from './state'
 // import { warn } from '../util/index'
 
@@ -13,7 +13,7 @@ function Vue (options) {
 
 initMixin(Vue)
 stateMixin(Vue)
-// eventsMixin(Vue)
+eventsMixin(Vue)
 lifecycleMixin(Vue)
 renderMixin(Vue)
 

@@ -22,6 +22,8 @@ import {
 
 export const emptyNode = new VNode('', {}, [])
 
+const hooks = ['create', 'activate', 'update', 'remove', 'destroy']
+
 /*
   判断两个VNode节点是否是同一个节点，需要满足以下条件
   key相同
@@ -58,20 +60,20 @@ function sameInputType (a, b) {
 
 
 export function createPatchFunction (backend) {
-  // let i, j
-  // const cbs = {}
+  let i, j
+  const cbs = {}
 
   // eslint-disable-next-line no-unused-vars
   const { modules, nodeOps } = backend
 
-  // for (i = 0; i < hooks.length; ++i) {
-  //   cbs[hooks[i]] = []
-  //   for (j = 0; j < modules.length; ++j) {
-  //     if (isDef(modules[j][hooks[i]])) {
-  //       cbs[hooks[i]].push(modules[j][hooks[i]])
-  //     }
-  //   }
-  // }
+  for (i = 0; i < hooks.length; ++i) {
+    cbs[hooks[i]] = []
+    for (j = 0; j < modules.length; ++j) {
+      if (isDef(modules[j][hooks[i]])) {
+        cbs[hooks[i]].push(modules[j][hooks[i]])
+      }
+    }
+  }
   function insert (parent, elm, ref) {
     if (isDef(parent)) {
       if (isDef(ref)) {
@@ -142,9 +144,9 @@ export function createPatchFunction (backend) {
 
       /* istanbul ignore if */
       createChildren(vnode, children, insertedVnodeQueue)
-      // if (isDef(data)) {
-      //   invokeCreateHooks(vnode, insertedVnodeQueue)
-      // }
+      if (isDef(data)) {
+        invokeCreateHooks(vnode, insertedVnodeQueue)
+      }
       insert(parentElm, vnode.elm, refElm)
 
       // if (process.env.NODE_ENV !== 'production' && data && data.pre) {
@@ -225,6 +227,16 @@ export function createPatchFunction (backend) {
     return new VNode(nodeOps.tagName(elm).toLowerCase(), {}, [], undefined, elm)
   }
 
+  function createRmCb (childElm, listeners) {
+    function remove () {
+      if (--remove.listeners === 0) {
+        removeNode(childElm)
+      }
+    }
+    remove.listeners = listeners
+    return remove
+  }
+
   function isPatchable (vnode) {
     while (vnode.componentInstance) {
       vnode = vnode.componentInstance._vnode
@@ -241,7 +253,7 @@ export function createPatchFunction (backend) {
       const ch = vnodes[startIdx]
       if (isDef(ch)) {
         if (isDef(ch.tag)) {
-          // removeAndInvokeRemoveHook(ch)
+          removeAndInvokeRemoveHook(ch)
           // invokeDestroyHook(ch)
         } else { // Text node
           removeNode(ch.elm)
@@ -249,11 +261,50 @@ export function createPatchFunction (backend) {
       }
     }
   }
+  function removeAndInvokeRemoveHook (vnode, rm) {
+    if (isDef(rm) || isDef(vnode.data)) {
+      let i
+      const listeners = cbs.remove.length + 1
+      if (isDef(rm)) {
+        // we have a recursively passed down rm callback
+        // increase the listeners count
+        rm.listeners += listeners
+      } else {
+        // directly removing
+        rm = createRmCb(vnode.elm, listeners)
+      }
+      // recursively invoke hooks on child component root node
+      if (isDef(i = vnode.componentInstance) && isDef(i = i._vnode) && isDef(i.data)) {
+        removeAndInvokeRemoveHook(i, rm)
+      }
+      for (i = 0; i < cbs.remove.length; ++i) {
+        cbs.remove[i](vnode, rm)
+      }
+      if (isDef(i = vnode.data.hook) && isDef(i = i.remove)) {
+        i(vnode, rm)
+      } else {
+        rm()
+      }
+    } else {
+      removeNode(vnode.elm)
+    }
+  }
   function removeNode (el) {
     const parent = nodeOps.parentNode(el)
     // element may have already been removed due to v-html / v-text
     if (isDef(parent)) {
       nodeOps.removeChild(parent, el)
+    }
+  }
+
+  function invokeCreateHooks (vnode, insertedVnodeQueue) {
+    for (let i = 0; i < cbs.create.length; ++i) {
+      cbs.create[i](emptyNode, vnode)
+    }
+    i = vnode.data.hook // Reuse variable
+    if (isDef(i)) {
+      if (isDef(i.create)) i.create(emptyNode, vnode)
+      if (isDef(i.insert)) insertedVnodeQueue.push(vnode)
     }
   }
 
@@ -432,11 +483,11 @@ export function createPatchFunction (backend) {
         // }
 
         // destroy old node
-        // if (isDef(parentElm)) {
-        //   removeVnodes([oldVnode], 0, 0)
-        // } else if (isDef(oldVnode.tag)) {
-        //   invokeDestroyHook(oldVnode)
-        // }
+        if (isDef(parentElm)) {
+          removeVnodes([oldVnode], 0, 0)
+        } else if (isDef(oldVnode.tag)) {
+          // invokeDestroyHook(oldVnode)
+        }
       }
     }
 

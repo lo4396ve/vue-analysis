@@ -1,6 +1,7 @@
 
 import { initState } from './state'
 import { initRender } from './render'
+import { initEvents } from './events'
 import { extend, mergeOptions } from '../util/index'
 
 let uid = 0
@@ -29,6 +30,7 @@ export function initMixin (Vue) {
     }
     vm._renderProxy = vm
     vm._self = vm
+    initEvents(vm)
     initRender(vm)
     initState(vm)
 

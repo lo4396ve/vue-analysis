@@ -1,4 +1,7 @@
-
+import {
+  emptyObject,
+  defineReactive
+} from '../util/index'
 import { createElement } from '../vdom/create-element'
 import { installRenderHelpers } from './render-helpers/index'
 import VNode, { createEmptyVNode } from '../vdom/vnode'
@@ -8,6 +11,8 @@ export function initRender (vm) {
   vm._vnode = null // the root of the child tree
   vm._staticTrees = null // v-once cached trees
   
+  const options = vm.$options
+  const parentVnode = vm.$vnode = options._parentVnode // the placeholder node in parent tree
   // bind the createElement fn to this instance
   // so that we get proper render context inside it.
   // args order: tag, data, children, normalizationType, alwaysNormalize
@@ -16,6 +21,11 @@ export function initRender (vm) {
   // normalization is always applied for the public version, used in
   // user-written render functions.
   vm.$createElement = (a, b, c, d) => createElement(vm, a, b, c, d, true)
+
+  const parentData = parentVnode && parentVnode.data
+
+  defineReactive(vm, '$attrs', parentData && parentData.attrs || emptyObject, null, true)
+  defineReactive(vm, '$listeners', options._parentListeners || emptyObject, null, true)
 }
 
 export let currentRenderingInstance = null
